@@ -39,7 +39,7 @@ public partial class MeleeSwing : Area2D
     private Vector2[] make_sector_shape(float angle, int amount_of_segments, float radius, float rotation)
     {
         // this function returns a vector2 array that when passed into the collisionpolygon2d node,
-        // makes a sector shape, as sector shapes can model melee swings.
+        // makes a sector shape, as sector shapes can model sword swings.
         Vector2[] vectorArray = new Vector2[amount_of_segments + 1]; // sets size to amount of segments + space for initial point
         vectorArray[0] = Vector2.Zero;
         for (int i = 1; i <= amount_of_segments; i++)
