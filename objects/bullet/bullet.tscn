@@ -6,7 +6,9 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_v8qja"]
 size = Vector2(34, 31)
 
-[node name="Bullet" type="CharacterBody2D"]
+[node name="Bullet" type="Area2D"]
+collision_layer = 2
+collision_mask = 5
 script = ExtResource("1_v8qja")
 Speed = 1000.0
 
@@ -18,3 +20,5 @@ texture = ExtResource("1_v7oki")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(2, -1.5)
 shape = SubResource("RectangleShape2D_v8qja")
+
+[connection signal="area_entered" from="." to="." method="_on_area_entered"]

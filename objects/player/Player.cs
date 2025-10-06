@@ -2,29 +2,41 @@ using Godot;
 using System;
 using System.Runtime.CompilerServices;
 
-public partial class Player : CharacterBody2D
+public partial class Player : CharacterBody2D, IDamageable
 {
     [Export]
-    private int Speed = 40;
+    private int speed = 40;
+    [Export] private PackedScene bullet;
+    [Export] private PackedScene meleeSwing;
     [Export]
-    private PackedScene bullet;
-    [Export]
+    private float health = 100f;
     private double shootCooldown = 0.5f;
     private double shootTimer = 0f;
     private Marker2D marker;
+    private Area2D noMouseArea;
     private Vector2 moveVec;
 
 
     public override void _Ready()
     {
+
         marker = GetNode<Marker2D>("Marker2D");
+        noMouseArea = GetNode<Area2D>("NoMouseArea");
+        
     }
 
     public override void _PhysicsProcess(double delta)
     {
         moveVec = Input.GetVector("Left", "Right", "Up", "Down");
-        Velocity = moveVec * (float)(Speed * delta * 1000);
+        Velocity = moveVec * (float)(speed * delta * 1000);
         MoveAndSlide();
+    }
+    public override void _Input(InputEvent @event)
+    {
+        if (Input.IsActionJustPressed("MeleeAttack"))
+        {
+            MeleeAttack();
+        }
     }
     public override void _Process(double delta)
     {
@@ -42,6 +54,10 @@ public partial class Player : CharacterBody2D
 
     private void Shoot()
     {
+        if (bullet is null)
+        {
+            throw new Exception("Bullet scene is empty!");
+        }
         Bullet b = bullet.Instantiate<Bullet>();
         b.Position = marker.GlobalPosition;
         GetParent().AddChild(b);
@@ -51,5 +67,28 @@ public partial class Player : CharacterBody2D
         Vector2 mousePos = GetGlobalMousePosition();
         LookAt(mousePos);
     }
-    
+
+    public void TakeDamage(float damage)
+    {
+        health -= damage;
+        if (health <= 0)
+        {
+            Die();
+        }
+    }
+    public void Die()
+    {
+        QueueFree();
+    }
+    private void MeleeAttack()
+    {
+        if (meleeSwing is null)
+        {
+            throw new Exception("Melee swing scene is empty!");
+        }
+        MeleeSwing m = meleeSwing.Instantiate<MeleeSwing>();
+        m.Position = marker.GlobalPosition;
+        GetParent().AddChild(m);
+
+    }
 }

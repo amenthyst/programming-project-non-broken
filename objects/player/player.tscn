@@ -1,15 +1,18 @@
-[gd_scene load_steps=5 format=3 uid="uid://c4w44owx311y8"]
+[gd_scene load_steps=6 format=3 uid="uid://c4w44owx311y8"]
 
 [ext_resource type="Texture2D" uid="uid://se80eqwsk68q" path="res://icon.svg" id="1_4flbx"]
 [ext_resource type="Script" uid="uid://b4p7tfxp7nwhc" path="res://objects/player/Player.cs" id="1_onrkg"]
 [ext_resource type="PackedScene" uid="uid://di76t5fmcwd00" path="res://objects/bullet/bullet.tscn" id="2_i3pqv"]
+[ext_resource type="PackedScene" uid="uid://dtlivwe4y4q5e" path="res://objects/melee_swing/melee_swing.tscn" id="3_jnjyq"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_onrkg"]
 size = Vector2(131, 122)
 
 [node name="Player" type="CharacterBody2D"]
+collision_mask = 6
 script = ExtResource("1_onrkg")
 bullet = ExtResource("2_i3pqv")
+meleeSwing = ExtResource("3_jnjyq")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("1_4flbx")

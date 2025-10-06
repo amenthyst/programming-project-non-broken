@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3 uid="uid://dtlivwe4y4q5e"]
+
+[ext_resource type="Script" uid="uid://bcn6k3qd37vpi" path="res://objects/melee_swing/MeleeSwing.cs" id="1_kf0bg"]
+
+[node name="MeleeSwing" type="Area2D"]
+collision_layer = 2
+collision_mask = 5
+script = ExtResource("1_kf0bg")
+angle = 120.0
+amount_of_segments = 20
+radius = 150.0
+lifetime = 0.2
+
+[node name="CollisionShape2D" type="CollisionPolygon2D" parent="."]
