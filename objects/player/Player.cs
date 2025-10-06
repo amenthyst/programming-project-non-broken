@@ -98,7 +98,7 @@ public partial class Player : CharacterBody2D, IDamageable
     }
 
     // these subroutines make it so no bullets/swings can fire if the mouse is in the no mouse zone,
-    // as it does not make sense to aim inward towards the player (the player shall not commit seppuku)
+    // as it does not make sense to aim inward towards the player
     private void _on_no_mouse_area_mouse_entered()
     {
         canAttack = false;

@@ -17,7 +17,6 @@ public partial class Enemy : Area2D, IDamageable
     }
     public void Die()
     {
-        GD.Print("dieded");
         QueueFree();
     }
 }
