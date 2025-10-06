@@ -16,13 +16,13 @@ public partial class Player : CharacterBody2D, IDamageable
     private Area2D noMouseArea;
     private Vector2 moveVec;
 
-
+    private bool canAttack = true;
     public override void _Ready()
     {
 
         marker = GetNode<Marker2D>("Marker2D");
         noMouseArea = GetNode<Area2D>("NoMouseArea");
-        
+
     }
 
     public override void _PhysicsProcess(double delta)
@@ -32,15 +32,20 @@ public partial class Player : CharacterBody2D, IDamageable
         MoveAndSlide();
     }
     public override void _Input(InputEvent @event)
-    {
-        if (Input.IsActionJustPressed("MeleeAttack"))
+    {   if (canAttack)
         {
-            MeleeAttack();
+            if (Input.IsActionJustPressed("MeleeAttack"))
+            {
+                MeleeAttack();
+            }
         }
     }
     public override void _Process(double delta)
-    {
-        if (Input.IsActionPressed("Shoot"))
+    {   // for continuous input events and continuous functions, as continuous input events 
+        // e.g. shooting do not work in _Input, as _Input is called by input event.
+        // sorry if this is bad practice but it works anyway and all the input should be recieved
+        // here anyway in Player.cs...
+        if (Input.IsActionPressed("Shoot") && canAttack)
         {
             shootTimer += delta;
             if (shootTimer >= shootCooldown)
@@ -90,5 +95,16 @@ public partial class Player : CharacterBody2D, IDamageable
         m.Position = marker.GlobalPosition;
         GetParent().AddChild(m);
 
+    }
+
+    // these subroutines make it so no bullets/swings can fire if the mouse is in the no mouse zone,
+    // as it does not make sense to aim inward towards the player (the player shall not commit seppuku)
+    private void _on_no_mouse_area_mouse_entered()
+    {
+        canAttack = false;
+    }
+    private void _on_no_mouse_area_mouse_exited()
+    {
+        canAttack = true;
     }
 }
