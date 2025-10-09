@@ -8,21 +8,25 @@ public partial class Player : CharacterBody2D, IDamageable
     private int speed = 40;
     [Export] private PackedScene bullet;
     [Export] private PackedScene meleeSwing;
-    [Export]
-    private float health = 100f;
+    [Export] private float health = 100f;
     private double shootCooldown = 0.5f;
     private double shootTimer = 0f;
     private Marker2D marker;
     private Area2D noMouseArea;
     private Vector2 moveVec;
 
+    public static Player Instance { get; private set; } // singleton pattern
     private bool canAttack = true;
+    
     public override void _Ready()
     {
-
+        if (Instance != null)
+        {
+            throw new Exception("More than one player instance!!!!!!!! FIX your code.");
+        }
+        Instance = this;
         marker = GetNode<Marker2D>("Marker2D");
         noMouseArea = GetNode<Area2D>("NoMouseArea");
-
     }
 
     public override void _PhysicsProcess(double delta)
@@ -92,9 +96,8 @@ public partial class Player : CharacterBody2D, IDamageable
             throw new Exception("Melee swing scene is empty!");
         }
         MeleeSwing m = meleeSwing.Instantiate<MeleeSwing>();
-        m.Position = marker.GlobalPosition;
-        GetParent().AddChild(m);
-
+        m.Position = marker.Position;
+        AddChild(m);
     }
 
     // these subroutines make it so no bullets/swings can fire if the mouse is in the no mouse zone,

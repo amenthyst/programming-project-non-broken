@@ -25,7 +25,7 @@ position = Vector2(0.5, -0.5)
 shape = SubResource("RectangleShape2D_onrkg")
 
 [node name="Marker2D" type="Marker2D" parent="."]
-position = Vector2(100, 0)
+position = Vector2(65, 0)
 scale = Vector2(166.369, 0.479457)
 
 [node name="NoMouseArea" type="Area2D" parent="."]

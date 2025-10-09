@@ -5,6 +5,8 @@ public partial class Enemy : Area2D, IDamageable
 {
     [Export]
     private float health = 100;
+
+    
     public void TakeDamage(float damage)
     {
         health -= damage;

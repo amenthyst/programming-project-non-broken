@@ -6,8 +6,8 @@
 collision_layer = 2
 collision_mask = 5
 script = ExtResource("1_kf0bg")
-angle = 120.0
 amount_of_segments = 20
-radius = 150.0
+lifetime = 0.1
+length_of_triangle = 250.0
 
 [node name="CollisionShape2D" type="CollisionPolygon2D" parent="."]
