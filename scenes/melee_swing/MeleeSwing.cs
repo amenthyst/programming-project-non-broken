@@ -45,7 +45,7 @@ public partial class MeleeSwing : Area2D
         vectorList.Add(new Vector2(length_of_triangle * circleStretch, -radius));
         for (int i = 0; i <= amount_of_segments; i++)
         {
-            float angle_of_segment = -Mathf.Pi / 2 + (i / (float)amount_of_segments * Mathf.Pi);
+            float angle_of_segment = -Mathf.Pi/2 + (i / (float)amount_of_segments * Mathf.Pi);
             double x = (radius * Mathf.Cos(angle_of_segment) + length_of_triangle) * circleStretch; // can write x coordinate as cos(theta), as cos = a/h and in the unit circle h = 1, adjacent = x
             double y = radius * Mathf.Sin(angle_of_segment);// same with y, sin(theta) = o/h and h = 1, so sin(theta) = o
             Vector2 coordinate_of_point = new Vector2((float)x, (float)y);

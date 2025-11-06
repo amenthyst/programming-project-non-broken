@@ -1,9 +1,9 @@
 [gd_scene load_steps=7 format=3 uid="uid://c4w44owx311y8"]
 
-[ext_resource type="Texture2D" uid="uid://se80eqwsk68q" path="res://icon.svg" id="1_4flbx"]
-[ext_resource type="Script" uid="uid://b4p7tfxp7nwhc" path="res://objects/player/Player.cs" id="1_onrkg"]
-[ext_resource type="PackedScene" uid="uid://di76t5fmcwd00" path="res://objects/bullet/bullet.tscn" id="2_i3pqv"]
-[ext_resource type="PackedScene" uid="uid://dtlivwe4y4q5e" path="res://objects/melee_swing/melee_swing.tscn" id="3_jnjyq"]
+[ext_resource type="Texture2D" uid="uid://se80eqwsk68q" path="res://assets/icon.svg" id="1_4flbx"]
+[ext_resource type="Script" uid="uid://b4p7tfxp7nwhc" path="res://scenes/player/Player.cs" id="1_onrkg"]
+[ext_resource type="PackedScene" uid="uid://di76t5fmcwd00" path="res://scenes/bullet/bullet.tscn" id="2_i3pqv"]
+[ext_resource type="PackedScene" uid="uid://dtlivwe4y4q5e" path="res://scenes/melee_swing/melee_swing.tscn" id="3_jnjyq"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_onrkg"]
 size = Vector2(89, 95)
@@ -12,10 +12,12 @@ size = Vector2(89, 95)
 radius = 9.56209
 
 [node name="Player" type="CharacterBody2D"]
+scale = Vector2(0.5, 0.5)
 collision_mask = 6
 script = ExtResource("1_onrkg")
 bullet = ExtResource("2_i3pqv")
 meleeSwing = ExtResource("3_jnjyq")
+meleeSwingOffset = 75.0
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("1_4flbx")
@@ -32,8 +34,11 @@ scale = Vector2(166.369, 0.479457)
 scale = Vector2(0.893783, 0.958692)
 
 [node name="NoMouseAreaHitbox" type="CollisionShape2D" parent="NoMouseArea"]
+position = Vector2(0, 1.04309)
 scale = Vector2(10.2975, -8.92732)
 shape = SubResource("CircleShape2D_jnjyq")
+
+[node name="MeeleSwingCooldownTimer" type="Timer" parent="."]
 
 [connection signal="mouse_entered" from="NoMouseArea" to="." method="_on_no_mouse_area_mouse_entered"]
 [connection signal="mouse_exited" from="NoMouseArea" to="." method="_on_no_mouse_area_mouse_exited"]

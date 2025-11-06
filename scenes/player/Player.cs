@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 public partial class Player : CharacterBody2D, IDamageable
 {
@@ -8,9 +9,13 @@ public partial class Player : CharacterBody2D, IDamageable
     private int speed = 40;
     [Export] private PackedScene bullet;
     [Export] private PackedScene meleeSwing;
-    [Export] private float health = 100f;
-    private double shootCooldown = 0.5f;
-    private double shootTimer = 0f;
+    [Export] public float health { get; set; } = 100f;
+    [Export] public float meleeSwingOffset = 100f;
+
+    [Export] public double shootCooldown = 0.5f;
+    [Export] public double meleeCooldown = 0.4f;
+    private bool canShoot = true;
+    private bool canMelee = true;
     private Marker2D marker;
     private Area2D noMouseArea;
     private Vector2 moveVec;
@@ -38,7 +43,7 @@ public partial class Player : CharacterBody2D, IDamageable
     public override void _Input(InputEvent @event)
     {   if (canAttack)
         {
-            if (Input.IsActionJustPressed("MeleeAttack"))
+            if (Input.IsActionJustPressed("MeleeAttack") && canMelee)
             {
                 MeleeAttack();
             }
@@ -49,20 +54,19 @@ public partial class Player : CharacterBody2D, IDamageable
         // e.g. shooting do not work in _Input, as _Input is called by input event.
         // sorry if this is bad practice but it works anyway and all the input should be recieved
         // here anyway in Player.cs...
-        if (Input.IsActionPressed("Shoot") && canAttack)
+        if (canAttack)
         {
-            shootTimer += delta;
-            if (shootTimer >= shootCooldown)
+            if (Input.IsActionPressed("Shoot") && canShoot)
             {
                 Shoot();
-                shootTimer = 0f;
             }
         }
         Rotate();
     }
 
-    private void Shoot()
+    private async void Shoot()
     {
+        canShoot = false;
         if (bullet is null)
         {
             throw new Exception("Bullet scene is empty!");
@@ -70,6 +74,21 @@ public partial class Player : CharacterBody2D, IDamageable
         Bullet b = bullet.Instantiate<Bullet>();
         b.Position = marker.GlobalPosition;
         GetParent().AddChild(b);
+        await ToSignal(GetTree().CreateTimer(shootCooldown), "timeout");
+        canShoot = true;
+    }
+    private async void MeleeAttack()
+    {
+        canMelee = false;
+        if (meleeSwing is null)
+        {
+            throw new Exception("Melee swing scene is empty!");
+        }
+        MeleeSwing m = meleeSwing.Instantiate<MeleeSwing>();
+        m.Position = marker.Position - new Vector2(meleeSwingOffset, 0); // offset
+        AddChild(m);
+        await ToSignal(GetTree().CreateTimer(meleeCooldown), "timeout");
+        canMelee = true;
     }
     private void Rotate()
     {
@@ -77,28 +96,20 @@ public partial class Player : CharacterBody2D, IDamageable
         LookAt(mousePos);
     }
 
-    public void TakeDamage(float damage)
-    {
-        health -= damage;
-        if (health <= 0)
-        {
-            Die();
-        }
-    }
     public void Die()
     {
         QueueFree();
     }
-    private void MeleeAttack()
-    {
-        if (meleeSwing is null)
-        {
-            throw new Exception("Melee swing scene is empty!");
-        }
-        MeleeSwing m = meleeSwing.Instantiate<MeleeSwing>();
-        m.Position = marker.Position;
-        AddChild(m);
-    }
+
+
+
+
+
+
+
+
+
+
 
     // these subroutines make it so no bullets/swings can fire if the mouse is in the no mouse zone,
     // as it does not make sense to aim inward towards the player
