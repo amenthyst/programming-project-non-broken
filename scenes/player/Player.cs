@@ -119,6 +119,6 @@ public partial class Player : CharacterBody2D, IDamageable
     }
     private void _on_no_mouse_area_mouse_exited()
     {
-        canAttack = true;
+      canAttack = true;
     }
 }

@@ -26,7 +26,7 @@ public partial class MeleeSwing : Area2D
         Vector2 directionVec = (GetGlobalMousePosition() - Position).Normalized();
         rotation = directionVec.Angle();
         
-        collisionPolygon2D.Polygon = make_sector_shape(Mathf.DegToRad(angle), amount_of_segments, length_of_triangle);
+        collisionPolygon2D.Polygon = make_better_sector_shape(Mathf.DegToRad(angle), amount_of_segments, length_of_triangle);
     }
 
     public override void _Process(double delta)

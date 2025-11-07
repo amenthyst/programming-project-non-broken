@@ -38,7 +38,7 @@ position = Vector2(0, 1.04309)
 scale = Vector2(10.2975, -8.92732)
 shape = SubResource("CircleShape2D_jnjyq")
 
-[node name="MeeleSwingCooldownTimer" type="Timer" parent="."]
+[node name="Camera2D" type="Camera2D" parent="."]
 
 [connection signal="mouse_entered" from="NoMouseArea" to="." method="_on_no_mouse_area_mouse_entered"]
 [connection signal="mouse_exited" from="NoMouseArea" to="." method="_on_no_mouse_area_mouse_exited"]
