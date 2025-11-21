@@ -4,11 +4,11 @@
 [ext_resource type="Script" uid="uid://blk2ojx2vlyp8" path="res://scenes/bullet/Bullet.cs" id="1_v8qja"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_v8qja"]
-size = Vector2(34, 31)
+size = Vector2(38, 37)
 
 [node name="Bullet" type="Area2D"]
 collision_layer = 2
-collision_mask = 4
+collision_mask = 12
 script = ExtResource("1_v8qja")
 Speed = 2000.0
 
@@ -21,4 +21,5 @@ texture = ExtResource("1_v7oki")
 position = Vector2(2, -1.5)
 shape = SubResource("RectangleShape2D_v8qja")
 
-[connection signal="area_entered" from="." to="." method="_on_area_entered"]
+[connection signal="area_entered" from="." to="." method="_on_body_entered"]
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]

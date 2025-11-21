@@ -21,9 +21,9 @@ public partial class Bullet : Area2D
         Position += velocity;
         
     }
-    private void _on_area_entered(Area2D area)
+    private void _on_body_entered(Node body)
     {
-        if (area is IDamageable target)
+        if (body is IDamageable target)
         {
             target.TakeDamage(Damage);
         }

@@ -13,7 +13,7 @@ radius = 9.56209
 
 [node name="Player" type="CharacterBody2D"]
 scale = Vector2(0.5, 0.5)
-collision_mask = 6
+collision_mask = 14
 script = ExtResource("1_onrkg")
 bullet = ExtResource("2_i3pqv")
 meleeSwing = ExtResource("3_jnjyq")
