@@ -5,8 +5,8 @@
 [ext_resource type="PackedScene" uid="uid://di76t5fmcwd00" path="res://scenes/bullet/bullet.tscn" id="2_i3pqv"]
 [ext_resource type="PackedScene" uid="uid://dtlivwe4y4q5e" path="res://scenes/melee_swing/melee_swing.tscn" id="3_jnjyq"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_onrkg"]
-size = Vector2(89, 95)
+[sub_resource type="CircleShape2D" id="CircleShape2D_lvxji"]
+radius = 55.0818
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_jnjyq"]
 radius = 9.56209
@@ -14,6 +14,7 @@ radius = 9.56209
 [node name="Player" type="CharacterBody2D"]
 scale = Vector2(0.5, 0.5)
 collision_mask = 14
+safe_margin = 10.0
 script = ExtResource("1_onrkg")
 bullet = ExtResource("2_i3pqv")
 meleeSwing = ExtResource("3_jnjyq")
@@ -23,11 +24,11 @@ meleeSwingOffset = 75.0
 texture = ExtResource("1_4flbx")
 
 [node name="Hitbox" type="CollisionShape2D" parent="."]
-position = Vector2(0.5, -0.5)
-shape = SubResource("RectangleShape2D_onrkg")
+position = Vector2(1, -1)
+shape = SubResource("CircleShape2D_lvxji")
 
 [node name="Marker2D" type="Marker2D" parent="."]
-position = Vector2(65, 0)
+position = Vector2(92, 0)
 scale = Vector2(166.369, 0.479457)
 
 [node name="NoMouseArea" type="Area2D" parent="."]
@@ -39,6 +40,8 @@ scale = Vector2(10.2975, -8.92732)
 shape = SubResource("CircleShape2D_jnjyq")
 
 [node name="Camera2D" type="Camera2D" parent="."]
+
+[node name="NavigationAgent2D" type="NavigationAgent2D" parent="."]
 
 [connection signal="mouse_entered" from="NoMouseArea" to="." method="_on_no_mouse_area_mouse_entered"]
 [connection signal="mouse_exited" from="NoMouseArea" to="." method="_on_no_mouse_area_mouse_exited"]

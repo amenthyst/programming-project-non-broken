@@ -19,7 +19,9 @@ public partial class Enemy : CharacterBody2D, IDamageable
     {
         base._Ready();
         navigationAgent = GetNode<NavigationAgent2D>("NavigationAgent2D");
-        
+        Rid defaultNavigationMapRid = GetWorld2D().NavigationMap;
+
+        navigationAgent.SetNavigationMap(defaultNavigationMapRid);
         CallDeferred("SetMovementPosition");
     }
 
@@ -31,13 +33,11 @@ public partial class Enemy : CharacterBody2D, IDamageable
 
     private void Move()
     {
-        if (navigationAgent.IsNavigationFinished())
-        {
-            return;
-        }
+     
         Vector2 currentPos = GlobalTransform.Origin;
         Vector2 nextPathPosition = navigationAgent.GetNextPathPosition();
         Velocity = currentPos.DirectionTo(nextPathPosition) * Speed;
+ 
         MoveAndSlide();
         CallDeferred("SetMovementPosition");
     }
@@ -50,6 +50,7 @@ public partial class Enemy : CharacterBody2D, IDamageable
     private async void SetMovementPosition()
     {
         await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+
         movementTarget = Player.Instance.GlobalPosition;
     }
 }

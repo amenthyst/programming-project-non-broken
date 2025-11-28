@@ -63,6 +63,14 @@ MeleeAttack={
 2d_physics/layer_3="Enemies"
 2d_physics/layer_4="Environment"
 
+[navigation]
+
+2d/default_edge_connection_margin=48.0
+2d/layer_4=""
+2d/layer_3=""
+2d/layer_2=""
+2d/layer_1=""
+
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0

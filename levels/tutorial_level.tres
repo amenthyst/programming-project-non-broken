@@ -1,25 +1,12 @@
-[gd_resource type="TileSet" load_steps=6 format=3 uid="uid://dn1jembojkh1q"]
+[gd_resource type="TileSet" load_steps=5 format=3 uid="uid://dn1jembojkh1q"]
 
 [ext_resource type="Texture2D" uid="uid://dxb0ftdyxmfok" path="res://assets/tilesheet_test.png" id="1_lhrtb"]
 [ext_resource type="PackedScene" uid="uid://d12mpt8hgc3j4" path="res://scenes/glass_pane/glass_pane.tscn" id="2_7coc0"]
-
-[sub_resource type="NavigationPolygon" id="NavigationPolygon_7coc0"]
-vertices = PackedVector2Array(16, 16, -16, 16, -16, -16, 16, -16)
-polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
-outlines = Array[PackedVector2Array]([PackedVector2Array(-16, -16, 16, -16, 16, 16, -16, 16)])
-agent_radius = 0.0
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_6ape0"]
 texture = ExtResource("1_lhrtb")
 texture_region_size = Vector2i(32, 32)
 0:1/0 = 0
-0:1/0/navigation_layer_0/polygon = SubResource("NavigationPolygon_7coc0")
-2:0/size_in_atlas = Vector2i(1, 2)
-2:0/0 = 0
-2:0/0/texture_origin = Vector2i(0, 16)
-2:0/0/z_index = 1
-2:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -16, 16, -16, 16, 16, -16, 16)
-2:0/0/physics_layer_0/polygon_0/one_way = true
 
 [sub_resource type="TileSetScenesCollectionSource" id="TileSetScenesCollectionSource_k8web"]
 resource_name = "glass_pane"

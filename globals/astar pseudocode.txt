@@ -1,0 +1,90 @@
+function AStar(start: Vector2, end: Vector2) -> Vector2[]:
+    // this pseudocode does not include anything about initializing the nodes and computing g and h
+    // it assumes all the attributes of the node are ready
+    struct Node:
+       int g = distance from start node
+       int h = distance from end node // heuristic
+       int f = g + h 
+       bool walkable
+       Vector2 vector
+
+    function tracePath(parents: Dict<Node, Node>, current: Node) -> Vector2[]:
+        // helper function, constructs the whole path from the end node and its parents
+        // parents is a map recording what node (child) came from what node (parent)
+        // by traversing this map, this function can recover the whole path from each node's
+        // successive parent.
+        path: List<Node> = {current}
+        while current in parents.Keys():
+            current = parents[current]
+            path.prepend(current)
+        return path
+
+    openSet: PriorityQueue<Node, int> = {start} // list of nodes to be evaluated, priority queue
+    closedSet: List<Node> = {} // list of nodes already evaluated
+
+    parents = new Dict<Node, Node> 
+    // for use in tracing the path, the nodes in the path will be 
+    // recorded here like a linked list
+
+    while openSet is not empty:
+        currentNode = node in openSet with lowest f value
+        if currentNode.vector == end:
+            return tracePath(parents, currentNode)
+
+        openSet.remove(currentNode)
+        closedSet.append(currentNode)
+
+        neighbours: Node[] = getNeighbours(Node)
+
+        for neighbour in neighbours:
+            if neighbour in closedSet or neighbour.walkable == false:
+                continue
+            
+            distanceFromStartToNeighbour = current.g + distance from current to neighbour
+
+            if distanceFromStartToNeighbour < neighbour.g:
+                // this node is part of the shortest path, record it
+                current = parents[neighbour] // set parent of neighbour to current, for tracePath
+                update f value of neighbour
+                if neighbour not in openSet:
+                    add neighbour to openSet
+    return failure/error
+
+// sqrt(2) = 1.4
+// all costs are times 10 to make it an int
+function heuristic(node):
+    dx = abs(node.x-goal.x)
+    dy = abs(node.y-goal.y)
+    return 10 * (dx+dy) - (14 - 2 * 10) * min(dx, dy)
+
+
+
+function GetTileMapData() -> Dictionary<Key: Vector2I[], Value: Node>:
+    groundTiles = groundTileMap.GetUsedCells()
+    obstacleTiles = obstacleTileMap.GetUsedCells()
+    dict = new Dictionary<Key: Vector2I[], Value: Node>
+    for coords in groundTiles:
+        if coords in obstacleTiles:
+            initialise Node with walkable = false
+        else:
+            initialise Node with walkable = true
+        append Node to dict with key coords
+    return dict
+
+function printTileMapData():
+    // assumes x and y are integers and equal or more than 0.
+
+    Node[,] tileArray = new 2D Array 
+    string arrayString = ""
+
+    for key in nodeDict.keys:
+        tileArray[key.y, key,x] = nodeDict[key]
+
+    for row in tileArray:
+        for col in row:
+            if tileArray[row, col].walkable == false:
+                arrayString += '#' 
+            else:
+                arrayString += '.'
+        arrayString += "\n"
+    return arrayString
