@@ -88,3 +88,15 @@ function printTileMapData():
                 arrayString += '.'
         arrayString += "\n"
     return arrayString
+
+function lazyGetNode(globalCoords, currentNode, targetNode) -> KeyValuePair of key Vector2 and value PathfindingNode:
+    Vector2I position = GlobaltoMap(globalCoords)
+    if position in obstacleLayerCoords:
+        initialize node with walkable = false and node.position = MaptoGlobal(position)
+    else:
+        initialize node with walkable = true and node.position = MaptoGlobal(position)
+    node.g = CalcGCost(node.position, currentNode.position)
+    node.h = Heuristic(node.position. targetNode.position)
+    return KeyValuePair(MaptoGlobal(position), node)
+    // after this function add the keyvaluepair to a dictionary
+
