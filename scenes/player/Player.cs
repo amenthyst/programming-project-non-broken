@@ -5,13 +5,20 @@ using System.Threading.Tasks;
 
 public partial class Player : CharacterBody2D, IDamageable
 {
+    public class SetPathEventArgs : EventArgs
+    {
+        public Vector2 EndPos;
+        public SetPathEventArgs(Vector2 endPos) {
+            EndPos = endPos;
+        }
+    }
     [Export]
     private int speed = 40;
     [Export] private PackedScene bullet;
     [Export] private PackedScene meleeSwing;
     [Export] public float health { get; set; } = 100f;
     [Export] public float meleeSwingOffset = 100f;
-
+    public event EventHandler<SetPathEventArgs> onPositionChanged;
     [Export] public double shootCooldown = 0.5f;
     [Export] public double meleeCooldown = 0.4f;
     private bool canShoot = true;
@@ -32,11 +39,16 @@ public partial class Player : CharacterBody2D, IDamageable
         Instance = this;
         marker = GetNode<Marker2D>("Marker2D");
         noMouseArea = GetNode<Area2D>("NoMouseArea");
+
     }
 
     public override void _PhysicsProcess(double delta)
     {
         moveVec = Input.GetVector("Left", "Right", "Up", "Down");
+        if (moveVec != Vector2.Zero)
+        {
+            onPositionChanged?.Invoke(this, new SetPathEventArgs(GlobalPosition));
+        }
         Velocity = moveVec * (float)(speed * delta * 1000);
         MoveAndSlide();
     }
@@ -63,7 +75,6 @@ public partial class Player : CharacterBody2D, IDamageable
         }
         Rotate();
     }
-
     private async void Shoot()
     {
         canShoot = false;
@@ -95,22 +106,10 @@ public partial class Player : CharacterBody2D, IDamageable
         Vector2 mousePos = GetGlobalMousePosition();
         LookAt(mousePos);
     }
-
     public void Die()
     {
         QueueFree();
     }
-
-
-
-
-
-
-
-
-
-
-
     // these subroutines make it so no bullets/swings can fire if the mouse is in the no mouse zone,
     // as it does not make sense to aim inward towards the player
     private void _on_no_mouse_area_mouse_entered()
@@ -121,4 +120,5 @@ public partial class Player : CharacterBody2D, IDamageable
     {
       canAttack = true;
     }
+    
 }

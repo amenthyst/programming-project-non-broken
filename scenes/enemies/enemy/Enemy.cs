@@ -1,5 +1,7 @@
 using Godot;
 using System;
+using System.Collections.Generic;
+using System.Threading;
 
 public partial class Enemy : CharacterBody2D, IDamageable
 {
@@ -7,39 +9,39 @@ public partial class Enemy : CharacterBody2D, IDamageable
     public float health { get; set; } = 100f;
     [Export] private float Speed = 100f;
 
-    private NavigationAgent2D navigationAgent;
-
-    public Vector2 movementTarget
-    {
-        get {return movementTarget;}
-        set {navigationAgent.TargetPosition = value;}
-    }
+    private Vector2[] path;
+    private PathfindingAgent pathfindingAgent;
+    private IEnumerator<Vector2> pathEnumerator;    
     
+    private int i = 0;
     public override void _Ready()
     {
         base._Ready();
-        navigationAgent = GetNode<NavigationAgent2D>("NavigationAgent2D");
-        Rid defaultNavigationMapRid = GetWorld2D().NavigationMap;
+        pathfindingAgent = GetNode<PathfindingAgent>("PathfindingAgent");
+        pathfindingAgent.groundLayer = GetTree().Root.GetNode<TileMapLayer>("root/TestLevel/Ground");
+        pathfindingAgent.obstacleLayer = GetTree().Root.GetNode<TileMapLayer>("root/TestLevel/Obstacles");
+        pathfindingAgent.parentPosition = GlobalPosition;
+        CallDeferred("DeferredSetup");
 
-        navigationAgent.SetNavigationMap(defaultNavigationMapRid);
-        CallDeferred("SetMovementPosition");
     }
-
+    private void DeferredSetup()
+    {
+        pathfindingAgent.setPath(GlobalPosition, Player.Instance.GlobalPosition);
+        pathEnumerator = pathfindingAgent.GetNextPathPosition().GetEnumerator();
+        pathEnumerator.MoveNext();
+        
+    }
     public override void _PhysicsProcess(double delta)
     {
-        base._PhysicsProcess(delta);
-        Move();
+        MoveTestPathfinding();
+        pathfindingAgent.parentPosition = GlobalPosition;
     }
 
     private void Move()
     {
      
-        Vector2 currentPos = GlobalTransform.Origin;
-        Vector2 nextPathPosition = navigationAgent.GetNextPathPosition();
-        Velocity = currentPos.DirectionTo(nextPathPosition) * Speed;
- 
-        MoveAndSlide();
-        CallDeferred("SetMovementPosition");
+        
+
     }
 
    
@@ -47,10 +49,25 @@ public partial class Enemy : CharacterBody2D, IDamageable
     {
         QueueFree();
     }
-    private async void SetMovementPosition()
-    {
-        await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
 
-        movementTarget = Player.Instance.GlobalPosition;
+    private void MoveTestPathfinding()
+    {
+        if (pathEnumerator == null)
+        {
+            return;
+        }
+        Vector2 targetPos = pathEnumerator.Current;
+        if (GlobalPosition.DistanceTo(targetPos) < 5f)
+        {
+            if (pathEnumerator.MoveNext())
+            {
+                targetPos = pathEnumerator.Current;
+            }
+            
+        }
+        Vector2 dir = targetPos - GlobalPosition;
+        dir = dir.Normalized();
+        Velocity = dir * Speed;
+        MoveAndSlide();
     }
 }

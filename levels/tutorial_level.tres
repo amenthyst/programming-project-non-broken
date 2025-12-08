@@ -7,6 +7,10 @@
 texture = ExtResource("1_lhrtb")
 texture_region_size = Vector2i(32, 32)
 0:1/0 = 0
+2:0/size_in_atlas = Vector2i(1, 2)
+2:0/0 = 0
+2:0/0/texture_origin = Vector2i(0, 15)
+2:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -24, 16, -24, 16, -16, 16, 16, -16, 16)
 
 [sub_resource type="TileSetScenesCollectionSource" id="TileSetScenesCollectionSource_k8web"]
 resource_name = "glass_pane"
