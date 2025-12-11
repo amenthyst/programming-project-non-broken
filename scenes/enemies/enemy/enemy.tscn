@@ -1,8 +1,8 @@
 [gd_scene load_steps=5 format=3 uid="uid://dan5bfhn75uu6"]
 
-[ext_resource type="Script" uid="uid://d17tuchyjnxr5" path="res://scenes/enemies/enemy/Enemy.cs" id="1_cl0dm"]
+[ext_resource type="Script" path="res://scenes/enemies/enemy/Enemy.cs" id="1_cl0dm"]
 [ext_resource type="Texture2D" uid="uid://dgx4vo2ocm1t1" path="res://assets/art/enemies/enemysprite.png" id="2_g2uix"]
-[ext_resource type="Script" uid="uid://c42d8vjikw4km" path="res://globals/PathfindingAgent.cs" id="3_5v1eo"]
+[ext_resource type="Script" path="res://globals/PathfindingAgent.cs" id="3_5v1eo"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_7ytu1"]
 radius = 56.0
@@ -12,7 +12,7 @@ scale = Vector2(0.5, 0.5)
 collision_layer = 4
 collision_mask = 11
 script = ExtResource("1_cl0dm")
-Speed = 400.0
+Speed = 200.0
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("2_g2uix")
@@ -23,4 +23,4 @@ shape = SubResource("CircleShape2D_7ytu1")
 
 [node name="PathfindingAgent" type="Node" parent="."]
 script = ExtResource("3_5v1eo")
-agentRadius = 50.0
+agentRadius = 50

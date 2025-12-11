@@ -11,8 +11,8 @@ config_version=5
 [application]
 
 config/name="programming-project"
-run/main_scene="uid://byvijpyjvs1wh"
-config/features=PackedStringArray("4.4", "C#", "Forward Plus")
+run/main_scene="res://globals/root.tscn"
+config/features=PackedStringArray("4.5", "C#", "Forward Plus")
 config/icon="res://assets/icon.svg"
 
 [display]

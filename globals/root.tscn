@@ -10,10 +10,10 @@
 scale = Vector2(3, 3)
 
 [node name="Player" parent="." instance=ExtResource("1_vuoy6")]
-position = Vector2(2282, 2108)
+position = Vector2(727, 147)
 
 [node name="Enemy" parent="." instance=ExtResource("2_2t5ln")]
-position = Vector2(431, 326)
+position = Vector2(435, 715)
 
 [node name="Camera2D" type="Camera2D" parent="Enemy"]
 position = Vector2(-24, 26)

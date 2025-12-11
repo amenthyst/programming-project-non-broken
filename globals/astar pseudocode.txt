@@ -101,35 +101,35 @@ function lazyGetNode(globalCoords, currentNode, targetNode) -> KeyValuePair of k
 	// after this function add the keyvaluepair to a dictionary
 
 function lineOfSightSmoothPath(path: Vector2):
-    smoothedPath = [path[0]] (list of vector2)
-    Raycast2D rayCast = new()
-    apex_index = 0
-    i = 1
-    while i < path.length:
-        apex = path[apex_index]
-        target = path[i]
-        if (!rayCast.hit_any_obstacles(apex, target)):
-            i += 1
-            continue
-        else:
-            # it hit an obstacle, index of 
-            apex_index = i - 1
-            smoothedPath.append(path[apex_index])
-            i = apex_index + 1
-    
-    if path[path.length - 1] not in smoothedPath
-        smoothedPath.append(path[path.length - 1])
-    return smoothedPath
+	smoothedPath = [path[0]] (list of vector2)
+	Raycast2D rayCast = new()
+	apex_index = 0
+	i = 1
+	while i < path.length:
+		apex = path[apex_index]
+		target = path[i]
+		if (!rayCast.hit_any_obstacles(apex, target)):
+			i += 1
+			continue
+		else:
+			# it hit an obstacle, index of 
+			apex_index = i - 1
+			smoothedPath.append(path[apex_index])
+			i = apex_index + 1
+	
+	if path[path.length - 1] not in smoothedPath
+		smoothedPath.append(path[path.length - 1])
+	return smoothedPath
 
-function addAgentRadius(path):\
-    newPath = []
-    for vec in path:
-        offset = new Vector2
-        for dir in neighbourDirections:
-            if node at (vec + dir) is not walkable
-                offset += opposite(dir) * agentRadius 
-        vec += offset
-        newPath.append(vec)
-    return newPath
+function addAgentRadius(path):
+	newPath = []
+	for vec in path:
+		offset = new Vector2
+		for dir in neighbourDirections:
+			if node at (vec + dir) is not walkable
+				offset += opposite(dir) * agentRadius 
+		vec += offset
+		newPath.append(vec)
+	return newPath
 
-        
+		
