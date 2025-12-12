@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 
 public partial class PathfindingAgent : Node
@@ -18,9 +19,11 @@ public partial class PathfindingAgent : Node
 	private HashSet<Vector2I> obstacleLayerCoords;
 	
 	private int i = 0;
+	
 
 	public Vector2 parentPosition;
 	[Export] public int agentRadius;
+	[Export] public int numberOfPointsInCurve = 5;
 
 	public Vector2[] path;
 	private enum NeighbourDirections
@@ -36,7 +39,7 @@ public partial class PathfindingAgent : Node
 	}
 	private static readonly Dictionary<NeighbourDirections, Vector2I> NeighbourDirectionsDict = new() {
 		{NeighbourDirections.TopLeftCorner, new Vector2I(-1,-1)},
-		{NeighbourDirections.Top, new Vector2I(0,-1)},
+		{NeighbourDirections.Top, new Vector2I(0,-1)}, 
 		{NeighbourDirections.TopRightCorner, new Vector2I(1,-1)},
 		{NeighbourDirections.Right, new Vector2I(1,0)},
 		{NeighbourDirections.BottomRightCorner, new Vector2I(1,1)},
@@ -120,52 +123,79 @@ public partial class PathfindingAgent : Node
 	{
 		List<Vector2> newPath = new();
 		newPath.Add(pathGlobal[0]);
-		RayCast2D rayCast = new();
-		GetTree().Root.GetNode<Node>("root").AddChild(rayCast);
-		rayCast.Enabled = true;
-		rayCast.CollisionMask = 1 << 3;
-		rayCast.CollideWithBodies = true;
-		GD.Print("Collision mask of raycast: ", rayCast.CollisionMask);
-		GD.Print("Collision layer of obstacles: ", obstacleLayer.TileSet.GetPhysicsLayerCollisionLayer(0));
 		int apexIndex = 0;
 		int i = 1;
+		var spaceState = GetTree().Root.GetWorld2D().DirectSpaceState;
+		var finalPoint = pathGlobal[^1];
+		Godot.Collections.Array<Godot.Rid> player = new() {GetParent<CharacterBody2D>().GetRid()};
+		var query = PhysicsRayQueryParameters2D.Create(Vector2.Zero, Vector2.Zero, exclude: player);
+		Vector2 previousObstaclePos = Vector2.Zero;
 		while (i < pathGlobal.Length)
 		{
 			Vector2 apex = pathGlobal[apexIndex];
 			// origin of raycast
 			Vector2 target = pathGlobal[i];
 			// target of raycast
-			rayCast.Position = apex;
-			rayCast.TargetPosition = target;
-			GD.Print("Starting point of raycast:", GlobalPositionToGridCoords(rayCast.Position));
-			GD.Print("Ending point of raycast:", GlobalPositionToGridCoords(rayCast.TargetPosition));
-
-			rayCast.ForceRaycastUpdate();
-
-			GD.Print("Is it colliding with something: ",rayCast.IsColliding());
-			
-			if (!rayCast.IsColliding())
-			{
-				i += 1;
+			query.From = apex;
+			query.To = target;
+			var res = spaceState.IntersectRay(query);
+			bool clear = res.Count == 0;
+			if (clear)
+            {
+                i += 1;
 				continue;
-			}
+            }
 			else
-			{
-				GD.Print("Collision found");
+			{	
+				var pos = (Vector2)res["position"];
+				if (pos.IsEqualApprox(previousObstaclePos))
+                {
+                    i += 1;
+					continue; 
+                }
 				apexIndex = i - 1; // new apex at this location
 				newPath.Add(pathGlobal[apexIndex]);
 				i = apexIndex + 1; // new target
+				previousObstaclePos = (Vector2)res["position"];
 			}
-			GD.Print("--------------");
+
 		}
-		newPath.Add(pathGlobal[pathGlobal.Length-1]);
+		if (newPath[^1] != finalPoint)
+        {
+			// if last item of newpath is not the final point of the original path
+            newPath.Add(finalPoint);
+        }
+		
 		return newPath.ToArray();
 	}
+	private Vector2 SampleBezierPoint(Vector2 p0, Vector2 p1, Vector2 p2, float t)
+    {
+        Vector2 q0 = p0.Lerp(p1, t);
+		Vector2 q1 = p1.Lerp(p2, t);
+		Vector2 r = q0.Lerp(q1, t);
+		return r;
+    } 
+	private void AddBezierCurving(Vector2[] pathGlobal)
+    {
+        List<Vector2> newPath = new();
+
+		
+    }
 	private Vector2[] pathPostProcess(Vector2[] pathGlobal)
 	{
 		Vector2[] newPath;
-		newPath = applyAgentRadius(pathGlobal);
-		newPath = LineOfSightPathSmoothing(newPath);
+		var watch = Stopwatch.StartNew();
+		newPath = LineOfSightPathSmoothing(pathGlobal);
+		watch.Stop();
+		GD.Print("Time taken to execute path smoothing: ", watch.ElapsedMilliseconds, " ms");
+		foreach (var v in newPath)
+        {
+            GD.Print(GlobalPositionToGridCoords(v));
+        }
+		var watch2 = Stopwatch.StartNew();
+		newPath = applyAgentRadius(newPath);
+		watch2.Stop();
+		GD.Print("Time taken to apply agent radius: ", watch2.ElapsedMilliseconds, " ms");
 		return newPath;
 	}
 	private PathfindingNode ConstructNodeFromGridPosition(Vector2I gridPos, PathfindingNode currentNode, PathfindingNode targetNode)
@@ -228,39 +258,6 @@ public partial class PathfindingAgent : Node
 	{
 		return groundLayer.LocalToMap(groundLayer.ToLocal(globalPos));
 	}
-	/* private Dictionary<Vector2, PathfindingNode> GetTileMapDataAsGrid()
-	{
-	   // prolly wont even use this one
-		Dictionary<Vector2, PathfindingNode> pathfindingNodes = new Dictionary<Vector2, PathfindingNode>();
-		// all this work just to cast an array from the godot array to the csharp array correctly
-		Vector2I[] groundLayerCoords = groundLayer.GetUsedCells().ToArray<Vector2I>();
-		Vector2I[] obstacleLayerCoords = obstacleLayer.GetUsedCells().ToArray<Vector2I>();
-		
-
-		foreach (Vector2I coords in groundLayerCoords)
-		{
-			
-			PathfindingNode node;
-			if (obstacleLayerCoords.Contains(coords))
-			{
-			   node = new PathfindingNode(false, coords);
-			}
-			else {
-			   node = new PathfindingNode(true, coords);
-			}
-			pathfindingNodes[coords] = node;
-		}
-		return pathfindingNodes;
-		//for (int i = 0; i < groundLayerCoords.Length; i++)
-		//{
-		   // sm about getting global coords of the tiles.
-		//   groundLayerCoords[i] = groundLayer.GetParent<Node2D>().ToGlobal(groundLayer.MapToLocal((Vector2I)groundLayerCoords[i]));
-		//}
-		//for (int i = 0; i < obstacleLayerCoords.Length; i++)
-		//{
-		//    obstacleLayerCoords[i] = obstacleLayer.GetParent<Node2D>().ToGlobal(obstacleLayer.MapToLocal((Vector2I)obstacleLayerCoords[i]));
-		//} */
-	//}
 	private bool checkIfWalkable(Vector2I nodePos, Vector2I previousNodePos, PathfindingNode endNode)
 	{
 		// goes through all the checks to see if a node is walkable
@@ -281,6 +278,7 @@ public partial class PathfindingAgent : Node
 			Vector2I sideB = new Vector2I(previousNodePos.X, previousNodePos.Y + delta.Y);
 			if (obstacleLayerCoords.Contains(sideA) && obstacleLayerCoords.Contains(sideB))
 			{
+				// violates corner 
 				return false;
 			}
 		}
@@ -288,6 +286,7 @@ public partial class PathfindingAgent : Node
 	}
 	public Vector2[] AStar(Vector2 startPos, Vector2 targetPos)
 	{   
+		
 		// REMEMBER!!!!!!!!! ALL NODES POSITION ARE IN LOCAL GRID COORDINATES!!!!! 
 		// THIS IS TO MAKE DISTANCE CALCULATING FASTER
 		// ALL POSITIONS ARE IN Vector2I
@@ -311,40 +310,32 @@ public partial class PathfindingAgent : Node
 		openSetLookup.Add(startNode.Position);
 		nodes[startNode.Position] = startNode;
 
+		PathfindingNode currentNode;
+		List<PathfindingNode> neighbours = new();
 		while (openSet.Count != 0)
 		{
 			i++;
-			PathfindingNode currentNode = openSet.Dequeue();
+			currentNode = openSet.Dequeue();
 			if (currentNode.Position == endNode.Position)
 			{
-				GD.Print("Path found"); 
 				GD.Print("Nodes expanded: ", nodesExpanded);
-				
-				Vector2[] finalArray = TracePath(currentNode);
-				foreach (var v in finalArray)
-				{
-					GD.Print("--> ", GlobalPositionToGridCoords(v));
-				} 
 				watch.Stop();
 				var elapsedSeconds = watch.ElapsedMilliseconds;
-				GD.Print("Time taken to execute pathfinding: ", elapsedSeconds, " ms");
+				GD.Print("Time taken to execute pathfinding before post-processing: ", elapsedSeconds, " ms");
+				
+				
+				var watch2 = Stopwatch.StartNew();
+				Vector2[] finalArray = TracePath(currentNode);
+				watch2.Stop();
+				elapsedSeconds = watch2.ElapsedMilliseconds;
+				GD.Print("Time taken to execute pathfinding after post-processing: ", elapsedSeconds, " ms");
 				return finalArray;
 			}
 			closedSet.Add(currentNode.Position);
 
-			/* GD.Print("Size of Open set:", openSetLookup.Count);
-			foreach (Vector2I v in openSetLookup)
-			{
-				printNodeData(nodes[v]);
-			}
-			GD.Print("----------");
-			GD.Print("Size of Closed set:", closedSet.Count);
-			foreach (Vector2I v in closedSet)
-			{
-				printNodeData(nodes[v]);
-			} */
+			
 
-			List<PathfindingNode> neighbours = new();
+			neighbours.Clear();
 			foreach (NeighbourDirections dir in Enum.GetValues(typeof(NeighbourDirections)))
 			{
 				PathfindingNode neighbour;
