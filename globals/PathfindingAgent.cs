@@ -9,56 +9,47 @@ using System.Linq;
 using System.Net;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using Godot.NativeInterop;
 
 
 public partial class PathfindingAgent : Node
 {
 	public TileMapLayer groundLayer;
 	public TileMapLayer obstacleLayer;
-	private HashSet<Vector2I> groundLayerCoords;
-	private HashSet<Vector2I> obstacleLayerCoords;
+	private Vector2I[] groundLayerCoords;
+	private Vector2I[] obstacleLayerCoords;
 	
 	private int i = 0;
 	
+
 
 	public Vector2 parentPosition;
 	[Export] public int agentRadius;
 	[Export] public int numberOfPointsInCurve = 5;
 
+	private Level level;
 	public Vector2[] path;
 	private enum NeighbourDirections
 	{
-		TopLeftCorner,
 		Top,
-		TopRightCorner,
 		Right,
-		BottomRightCorner,
 		Bottom,
-		BottomLeftCorner,
 		Left
 	}
 	private static readonly Dictionary<NeighbourDirections, Vector2I> NeighbourDirectionsDict = new() {
-		{NeighbourDirections.TopLeftCorner, new Vector2I(-1,-1)},
 		{NeighbourDirections.Top, new Vector2I(0,-1)}, 
-		{NeighbourDirections.TopRightCorner, new Vector2I(1,-1)},
 		{NeighbourDirections.Right, new Vector2I(1,0)},
-		{NeighbourDirections.BottomRightCorner, new Vector2I(1,1)},
 		{NeighbourDirections.Bottom, new Vector2I(0,1)},
-		{NeighbourDirections.BottomLeftCorner, new Vector2I(-1,1)},
 		{NeighbourDirections.Left, new Vector2I(-1,0)}
 	};
 	private static readonly Dictionary<NeighbourDirections, NeighbourDirections> oppositeDirectionsDict = new()
 	{
-		{NeighbourDirections.TopLeftCorner, NeighbourDirections.BottomRightCorner},
 		{NeighbourDirections.Top, NeighbourDirections.Bottom},
-		{NeighbourDirections.TopRightCorner, NeighbourDirections.BottomLeftCorner},
 		{NeighbourDirections.Right, NeighbourDirections.Left},
-		{NeighbourDirections.BottomRightCorner, NeighbourDirections.TopLeftCorner},
 		{NeighbourDirections.Bottom, NeighbourDirections.Top},
-		{NeighbourDirections.BottomLeftCorner, NeighbourDirections.TopRightCorner},
 		{NeighbourDirections.Left, NeighbourDirections.Right}
 	};
-	
+	private Array dirIterable = Enum.GetValues(typeof(NeighbourDirections));
 	public class PathfindingNode
 	{
 		public PathfindingNode(Vector2I position)
@@ -72,45 +63,45 @@ public partial class PathfindingAgent : Node
 		public bool Walkable;
 		public Vector2I Position;
 		public PathfindingNode? parent = null;
+		public bool? Visited;
 
 	}
 	
 	public override void _Ready()
 	{
-		
 		CallDeferred("DeferredSetup");
 	}
 	private void DeferredSetup()
 	{
-		// make sure the groundLayers and obstacleLayers are initialized
-		groundLayerCoords = groundLayer.GetUsedCells().ToHashSet<Vector2I>();
-		obstacleLayerCoords = obstacleLayer.GetUsedCells().ToHashSet<Vector2I>();
-	}
+		level = GetTree().Root.GetNode<Level>("root/TestLevel");
 
+	}
+	
+	
 	private Vector2[] TracePath(PathfindingNode current)
 	{
 		List<Vector2> path = new List<Vector2>();
 		while (current != null)
 		{
-			path.Insert(0, GridCoordsToGlobalPosition(current.Position));
+			path.Insert(0, level.GridCoordsToGlobalPosition(current.Position));
 			current = current.parent;
 		}
-
-		return pathPostProcess(path.ToArray());
+		return path.ToArray();
 	}
 
-	private Vector2[] applyAgentRadius(Vector2[] pathGlobal) 
+	/* private Vector2[] applyAgentRadius(Vector2[] pathGlobal) 
 	{
 		List<Vector2> modifiedPath = new();
 		foreach (Vector2 v in pathGlobal)
 		{
-			Vector2I localCoord = GlobalPositionToGridCoords(v);
+			Vector2I localCoord = level.GlobalPositionToGridCoords(v);
 			Vector2I offset = Vector2I.Zero;
 			foreach (NeighbourDirections dir in Enum.GetValues(typeof(NeighbourDirections)))
 			{
 				Vector2I potentialObstaclePos = localCoord + NeighbourDirectionsDict[dir];
-				if (obstacleLayerCoords.Contains(potentialObstaclePos))
+				if (level.levelIsWalkableGrid[potentialObstaclePos.Y + level.offsetY, potentialObstaclePos.X + level.offsetX] == false)
 				{
+					// obstacle at that position
 					offset += NeighbourDirectionsDict[oppositeDirectionsDict[dir]];
 				}
 			}
@@ -118,19 +109,20 @@ public partial class PathfindingAgent : Node
 			modifiedPath.Add(newVec);
 		}
 		return modifiedPath.ToArray();
-	}
+	} */
 	private Vector2[] LineOfSightPathSmoothing(Vector2[] pathGlobal)
 	{
 		List<Vector2> newPath = new();
 		newPath.Add(pathGlobal[0]);
 		int apexIndex = 0;
 		int i = 1;
+		int j = 0;
 		var spaceState = GetTree().Root.GetWorld2D().DirectSpaceState;
 		var finalPoint = pathGlobal[^1];
-		Godot.Collections.Array<Godot.Rid> player = new() {GetParent<CharacterBody2D>().GetRid()};
+		Godot.Collections.Array<Rid> player = new() {GetParent<CharacterBody2D>().GetRid()};
 		var query = PhysicsRayQueryParameters2D.Create(Vector2.Zero, Vector2.Zero, exclude: player);
 		Vector2 previousObstaclePos = Vector2.Zero;
-		while (i < pathGlobal.Length)
+		while (i < pathGlobal.Length && j < 1000)
 		{
 			Vector2 apex = pathGlobal[apexIndex];
 			// origin of raycast
@@ -138,6 +130,8 @@ public partial class PathfindingAgent : Node
 			// target of raycast
 			query.From = apex;
 			query.To = target;
+			GD.Print("From: ",query.From);
+			GD.Print("To: ", query.To);
 			var res = spaceState.IntersectRay(query);
 			bool clear = res.Count == 0;
 			if (clear)
@@ -147,18 +141,12 @@ public partial class PathfindingAgent : Node
             }
 			else
 			{	
-				var pos = (Vector2)res["position"];
-				if (pos.IsEqualApprox(previousObstaclePos))
-                {
-                    i += 1;
-					continue; 
-                }
+				GD.Print("collision registered");
 				apexIndex = i - 1; // new apex at this location
-				newPath.Add(pathGlobal[apexIndex]);
-				i = apexIndex + 1; // new target
-				previousObstaclePos = (Vector2)res["position"];
+				newPath.Add(pathGlobal[apexIndex]);// new target
+				i = apexIndex + 1;
 			}
-
+			j += 1;
 		}
 		if (newPath[^1] != finalPoint)
         {
@@ -178,8 +166,6 @@ public partial class PathfindingAgent : Node
 	private void AddBezierCurving(Vector2[] pathGlobal)
     {
         List<Vector2> newPath = new();
-
-		
     }
 	private Vector2[] pathPostProcess(Vector2[] pathGlobal)
 	{
@@ -190,10 +176,10 @@ public partial class PathfindingAgent : Node
 		GD.Print("Time taken to execute path smoothing: ", watch.ElapsedMilliseconds, " ms");
 		foreach (var v in newPath)
         {
-            GD.Print(GlobalPositionToGridCoords(v));
+            GD.Print(level.GlobalPositionToGridCoords(v));
         }
 		var watch2 = Stopwatch.StartNew();
-		newPath = applyAgentRadius(newPath);
+		//newPath = applyAgentRadius(newPath);
 		watch2.Stop();
 		GD.Print("Time taken to apply agent radius: ", watch2.ElapsedMilliseconds, " ms");
 		return newPath;
@@ -202,6 +188,7 @@ public partial class PathfindingAgent : Node
 	{
 		PathfindingNode node;
 		node = new PathfindingNode(gridPos);
+		node.Walkable = (bool)level.levelIsWalkableGrid[gridPos.Y + level.offsetY, gridPos.X + level.offsetX];
 		node.G = CalcGCost(currentNode, node);
 		node.H = CalcHCost(node, targetNode);
 		return node;
@@ -209,81 +196,20 @@ public partial class PathfindingAgent : Node
 	
 	private int CalcGCost(PathfindingNode currentNode, PathfindingNode neighbourNode)
 	{
-		int horizontal_dist = 10;
-		int diagonal_dist = 14;
-		int dx = Math.Abs(currentNode.Position.X - neighbourNode.Position.X);
-		int dy = Math.Abs(currentNode.Position.Y - neighbourNode.Position.Y);
-
-		if (dx == 1 && dy == 1)
-		{
-			return currentNode.G + diagonal_dist; // this is a diagonal
-		}
-		else
-		{
-			return currentNode.G + horizontal_dist; // this is not a diagonal
-		}
-	}
-	private int Dist(PathfindingNode x, PathfindingNode y)
-	{
-		// calculates distance between 2 nodes
-		int horizontal_dist = 10;
-		int diagonal_dist = 14;
-		int dx = Math.Abs(x.Position.X - y.Position.X);
-		int dy = Math.Abs(x.Position.Y - y.Position.Y);
-		if (dx == 1 && dy == 1)
-		{
-			return diagonal_dist;
-		}
-		else
-		{
-			return horizontal_dist;
-		}
+		int horizontal_dist = 1;
+		return currentNode.G + horizontal_dist; // since there are only 4 cardinal directions, the distance between neighbouring nodes
+		// is always 1 (or 10 in this case)
+		
 	}
 	private int CalcHCost(PathfindingNode currentNode, PathfindingNode targetNode)
 	{
-		// heuristic in A*, octile distance
-		int horizontal_dist = 10;
-		int diagonal_dist = 14;
+		// heuristic in A*, Manhattan distance
 		int dx = Math.Abs(currentNode.Position.X - targetNode.Position.X);
 		int dy = Math.Abs(currentNode.Position.Y - targetNode.Position.Y);
+		return dx + dy;
 
-		return horizontal_dist * (dx+dy) - (diagonal_dist - 2 * horizontal_dist) * Math.Min(dx, dy);
+	}
 
-	}
-	private Vector2 GridCoordsToGlobalPosition(Vector2I gridPos)
-	{
-		return groundLayer.GetParent<Node2D>().ToGlobal(groundLayer.MapToLocal(gridPos));
-	}
-	private Vector2I GlobalPositionToGridCoords(Vector2 globalPos)
-	{
-		return groundLayer.LocalToMap(groundLayer.ToLocal(globalPos));
-	}
-	private bool checkIfWalkable(Vector2I nodePos, Vector2I previousNodePos, PathfindingNode endNode)
-	{
-		// goes through all the checks to see if a node is walkable
-		bool diagonalMove;
-		if (obstacleLayerCoords.Contains(nodePos) && nodePos != endNode.Position)
-		{
-			return false;
-		}
-		Vector2I delta = nodePos - previousNodePos;
-		if (nodePos == endNode.Position)
-		{
-			GD.Print(delta);
-		}
-		diagonalMove = Math.Abs(delta.X) == 1 && Math.Abs(delta.Y) == 1;
-		if (diagonalMove) {
-	
-			Vector2I sideA = new Vector2I(previousNodePos.X + delta.X, previousNodePos.Y);
-			Vector2I sideB = new Vector2I(previousNodePos.X, previousNodePos.Y + delta.Y);
-			if (obstacleLayerCoords.Contains(sideA) && obstacleLayerCoords.Contains(sideB))
-			{
-				// violates corner 
-				return false;
-			}
-		}
-		return true;
-	}
 	public Vector2[] AStar(Vector2 startPos, Vector2 targetPos)
 	{   
 		
@@ -294,54 +220,79 @@ public partial class PathfindingAgent : Node
 		// danny ho's implementation of the a* algorithm
 		// start and end position should be in global coordinates
 		var watch = Stopwatch.StartNew();
-		int nodesExpanded = 0;
-		PriorityQueue<PathfindingNode, (int, int)> openSet = new();
+		List<PathfindingNode> openSet = new();
 		Dictionary<Vector2I, PathfindingNode> nodes = new();
-		HashSet<Vector2I> openSetLookup = new();
-		HashSet<Vector2I> closedSet = new(); 
 
-		PathfindingNode startNode = new PathfindingNode(GlobalPositionToGridCoords(startPos));
-		PathfindingNode endNode = new PathfindingNode(GlobalPositionToGridCoords(targetPos));
+		List<PathfindingNode> neighbours = new();
 
+		int nodesExpanded = 0;
+		int horizontal_dist = 1;
+		int arrayHeight = level.levelIsWalkableGrid.GetLength(0);
+		int arrayWidth = level.levelIsWalkableGrid.GetLength(1);
+		
+		PathfindingNode startNode = new PathfindingNode(level.GlobalPositionToGridCoords(startPos));
+		PathfindingNode endNode = new PathfindingNode(level.GlobalPositionToGridCoords(targetPos));
+		
+		
 		startNode.G = 0; // distance from start node to start node is 0 (shockingly)
 		startNode.H = CalcHCost(startNode, endNode);
 		startNode.Walkable = true;
-		openSet.Enqueue(startNode, (startNode.F, startNode.H));
-		openSetLookup.Add(startNode.Position);
+		openSet.Add(startNode);
 		nodes[startNode.Position] = startNode;
 
+		Vector2I posOffset;
+		Vector2I neighbourPos;
 		PathfindingNode currentNode;
-		List<PathfindingNode> neighbours = new();
+		PathfindingNode neighbour;
+
+		
+		
+		
+		
 		while (openSet.Count != 0)
 		{
 			i++;
-			currentNode = openSet.Dequeue();
+			
+			currentNode = openSet[0];
+			currentNode.Visited = false;
+			foreach (var v in openSet)
+			{
+				if (v.F < currentNode.F)
+				{
+					currentNode = v;
+				}
+			}
+			openSet.Remove(currentNode);
 			if (currentNode.Position == endNode.Position)
 			{
-				GD.Print("Nodes expanded: ", nodesExpanded);
 				watch.Stop();
-				var elapsedSeconds = watch.ElapsedMilliseconds;
-				GD.Print("Time taken to execute pathfinding before post-processing: ", elapsedSeconds, " ms");
+				long elapsedTicks = watch.ElapsedTicks;
+				GD.Print("Time taken to execute pathfinding before post-processing: ", Mathf.Round((double)elapsedTicks / Stopwatch.Frequency * 1000000), " microseconds");
 				
+				GD.Print("Nodes expanded: ", nodesExpanded);
 				
 				var watch2 = Stopwatch.StartNew();
 				Vector2[] finalArray = TracePath(currentNode);
 				watch2.Stop();
-				elapsedSeconds = watch2.ElapsedMilliseconds;
-				GD.Print("Time taken to execute pathfinding after post-processing: ", elapsedSeconds, " ms");
+				elapsedTicks = watch2.ElapsedTicks;
+				GD.Print("Time taken to execute pathfinding after post-processing: ", Mathf.Round((double)elapsedTicks / Stopwatch.Frequency * 1000000), " microseconds");
 				return finalArray;
 			}
-			closedSet.Add(currentNode.Position);
-
-			
-
+			currentNode.Visited = true;
 			neighbours.Clear();
-			foreach (NeighbourDirections dir in Enum.GetValues(typeof(NeighbourDirections)))
+			foreach (NeighbourDirections dir in dirIterable)
 			{
-				PathfindingNode neighbour;
-				Vector2I posOffset = NeighbourDirectionsDict[dir];
-				Vector2I neighbourPos = currentNode.Position + posOffset;
-				if (!groundLayerCoords.Contains(neighbourPos))
+				
+				posOffset = NeighbourDirectionsDict[dir];
+				neighbourPos = currentNode.Position + posOffset;
+
+				int neighbourPositionInGridX = neighbourPos.X + level.offsetX;
+				int neighbourPositionInGridY = neighbourPos.Y + level.offsetY;
+				bool isInTileMap = (neighbourPositionInGridX > 0 && neighbourPositionInGridX < arrayWidth - 1) &&
+								   (neighbourPositionInGridY > 0 && neighbourPositionInGridY < arrayHeight - 1) &&
+								   (level.levelIsWalkableGrid[neighbourPositionInGridY, neighbourPositionInGridX] != null);
+
+				if (!isInTileMap)
 				{
 					continue;
 					// if there is no tile at that coordinate skip
@@ -359,32 +310,31 @@ public partial class PathfindingAgent : Node
 				neighbours.Add(neighbour);
 				// get neighbours in 8 directions of currentNode
 			}
-			foreach (PathfindingNode neighbour in neighbours)
+			foreach (PathfindingNode neighbourLocal in neighbours)
 			{   
-				
-				neighbour.Walkable = checkIfWalkable(neighbour.Position, currentNode.Position, endNode);
 
-				if (!neighbour.Walkable || closedSet.Contains(neighbour.Position))
+				if (!neighbourLocal.Walkable || neighbourLocal.Visited == true)
 				{
 					continue;
 				}
-				int tentativeG = currentNode.G + Dist(currentNode, neighbour);
-				if (tentativeG <= neighbour.G || neighbour.Position == endNode.Position)
+				
+				int tentativeG = currentNode.G + horizontal_dist;
+				if (tentativeG <= neighbourLocal.G)
 				{
 					// the path from the currentNode to the neighbour is a better path than the previous path
 					// to the neighbour, as the cost from this node to the neighbour is lower
 			 
-					neighbour.G = tentativeG;
-					neighbour.parent = currentNode;
-					if (!openSetLookup.Contains(neighbour.Position))
+					neighbourLocal.G = tentativeG;
+					neighbourLocal.parent = currentNode;
+					if (neighbourLocal.Visited == null)
 					{
-						openSet.Enqueue(neighbour, (neighbour.F, neighbour.H));
-						openSetLookup.Add(neighbour.Position);
+						neighbourLocal.Visited = false;
+						openSet.Add(neighbourLocal);
 					}
 				}
 			}
 		}
-		GD.Print("Nodes Expanded: ", nodesExpanded);
+
 		throw new Exception("no path found");
 	}
 

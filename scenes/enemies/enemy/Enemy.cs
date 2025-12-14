@@ -18,8 +18,6 @@ public partial class Enemy : CharacterBody2D, IDamageable
 	{
 		base._Ready();
 		pathfindingAgent = GetNode<PathfindingAgent>("PathfindingAgent");
-		pathfindingAgent.groundLayer = GetTree().Root.GetNode<TileMapLayer>("root/TestLevel/Ground");
-		pathfindingAgent.obstacleLayer = GetTree().Root.GetNode<TileMapLayer>("root/TestLevel/Obstacles");
 		pathfindingAgent.parentPosition = GlobalPosition;
 		CallDeferred("DeferredSetup");
 
@@ -29,7 +27,6 @@ public partial class Enemy : CharacterBody2D, IDamageable
 		pathfindingAgent.setPath(GlobalPosition, Player.Instance.GlobalPosition);
 		pathEnumerator = pathfindingAgent.GetNextPathPosition().GetEnumerator();
 		pathEnumerator.MoveNext();
-		
 	}
 	public override void _PhysicsProcess(double delta)
 	{
