@@ -132,4 +132,117 @@ function addAgentRadius(path):
 		newPath.append(vec)
 	return newPath
 
+function parseGridIntoIslands():
+	dirs = [left vector, right vector, up vector, down vector]
+	localArray = walkableGrid.copy()
+	islands = new list of hashset<Vector2I>
+	currentIsland = hashset<Vector2I>
+	function depthFirstSearch(pos):
+		// recursive.
+		currentIsland.Add(pos)
+		localArray[pos] = null // modifies the array
+		for dir in dirs:
+			offset = pos + dir
+			if offset in bounds of array and localArray[offset] == true:
+				depthFirstSearch(offset)
+	
+	for row in localArray:
+		for col in row:
+			if localArray[row, col] == true:
+				depthFirstSearch[Vector2I(row, col)]
+				islands.Add(currentIsland)
+				currentIsland.clear()
+	
+	return islands
+
+class Window:
+	int xmin;
+	int xmax;
+	int ymin;
+	int ymax;
+
+function ParseObstaclesIntoRectangles():
+	for obstacleSet in obstacles:
+		obstacles[obstacleSet.index] = obstacleSet.ToArray()
+	List<Window> windows = new();
+	for obstacleSet in obstacle:
+		Window window = new();
+		window.xmin = obstacleSet[0]'s collider's top left corner X coordinate
+		window.xmax = obstacleSet[^1]'s collider's top right corner X coordinate
+		window.ymin = obstacleSet[0]'s collider's bottom left corner Y coordinate
+		window.xmax = obstacleSet[^1]'s collider's top right corner Y coordinate
+		windows.append(window)
+	return windows.ToArray()
+
+function LiangBarskyEntersRectangle(start, end, window):
+	x1 = start.x
+	x2 = end.X
+	y1 = start.Y
+	y2 = end.Y
+	dx = x2-x1
+	dy = y2-y1
+	p = [-dx, dx, -dy, dy]
+	q = [x1 - window.xmin, window.xmax - x1, y1 - window.ymin, window.ymax - y1]
+	t_enter = 0
+	t_exit = 1
+	for i in range(4):
+		if p[i] == 0:
+			// the line is parallel - either horizontal or vertical
+			if q[i] < 0:
+			// line outside rectangle 
+			return false
+		else:
+				t = q[i] / p[i]
+				if p[i] < 0:
+					if t > t_enter:
+						t_enter = t
+				else:
+					if t < t_exit:
+						t_exit = t
+	if t_enter > t_exit:
+		return false // line outside rectangle
+	else:
+		return true
+
+dx = x2-x1
+dy = y2-y1
 		
+X = x1 + t(dx)
+Y = y1 + t(dy)
+
+0 <= t <= 1
+
+these inequalities must be true if a line intersects the window:
+window xmin <= X <= window xmax
+window ymin <= Y <= window ymax
+
+rearranged as:
+t(dx) >= xmin - x1
+t(dx) <= xmax - x1
+t(dy) >= ymin - y1
+t(dy) <= ymax - y1
+
+then:
+-t(dx) <= x1 - xmin
+t(dx) <= xmax - x1
+-t(dy) <= y1 - ymin
+t(dy) <= ymax - y1
+
+function AddBezierCurving(Vector2[] pathGlobal) {
+	newpath = list<vector2>
+
+	foreach item in pathGlobal starting from index 1 and ending at index pathGlobal.length-2:
+		newpath.append(pathGlobal[i-1])
+		// setting control points of quadratic bezier
+		point1 = vector2 distance (setDistance) away from pathGlobal[i] in direction (pathGlobal[i]-pathGlobal[i-1])
+		point3 = vector2 distance (setDistance) away from pathGlobal[i] in direction (pathGlobal[i+1]-pathGlobal[i])
+		point2 = vector2 distance (controlPoint distance) away from pathGlobal[i] in direction (perpendicular of direction point1 and point3)
+
+		for i from 1 to curve_resolution:
+			curvePoint = sample bezier point with control points point1, point2, point3 and with t = i / curve_resolution
+			newPath.append(curvePoint)
+
+	newPath.append(last point of pathGlobal)
+	return newPath
+	
+}

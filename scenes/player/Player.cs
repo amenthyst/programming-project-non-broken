@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 public partial class Player : CharacterBody2D, IDamageable
 {
+    public event EventHandler<SetPathEventArgs> onPositionChanged;
     public class SetPathEventArgs : EventArgs
     {
         public Vector2 EndPos;
@@ -18,7 +19,7 @@ public partial class Player : CharacterBody2D, IDamageable
     [Export] private PackedScene meleeSwing;
     [Export] public float health { get; set; } = 100f;
     [Export] public float meleeSwingOffset = 100f;
-    public event EventHandler<SetPathEventArgs> onPositionChanged;
+    
     [Export] public double shootCooldown = 0.5f;
     [Export] public double meleeCooldown = 0.4f;
     private bool canShoot = true;

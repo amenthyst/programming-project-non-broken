@@ -7,14 +7,12 @@
 [node name="root" type="Node"]
 
 [node name="TestLevel" parent="." instance=ExtResource("1_8ar8c")]
-position = Vector2(-2243, -131)
+visibility_layer = 17
 scale = Vector2(3, 3)
+padding = 40.0
 
 [node name="Player" parent="." instance=ExtResource("1_vuoy6")]
-position = Vector2(6681, 1423)
+position = Vector2(1770, 1818)
 
 [node name="Enemy" parent="." instance=ExtResource("2_2t5ln")]
-position = Vector2(318, 1078)
-
-[node name="Camera2D" type="Camera2D" parent="Enemy"]
-position = Vector2(-30, 10)
+position = Vector2(544, 332)

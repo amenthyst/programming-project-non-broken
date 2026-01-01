@@ -2,36 +2,51 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 public partial class Enemy : CharacterBody2D, IDamageable
 {
-	[Export]
+	
 	public float health { get; set; } = 100f;
 	[Export] private float Speed = 100f;
-
+	private float timer = 0f;
 	private Vector2[] path;
 	private PathfindingAgent pathfindingAgent;
-	private IEnumerator<Vector2> pathEnumerator;    
-	
-	private int i = 0;
+	private IEnumerator<Vector2> currentEnumerator;    
+	private IEnumerator<Vector2> pendingEnumerator;
+	private bool isCalculatingNewPath = false;
 	public override void _Ready()
 	{
 		base._Ready();
 		pathfindingAgent = GetNode<PathfindingAgent>("PathfindingAgent");
 		pathfindingAgent.parentPosition = GlobalPosition;
-		CallDeferred("DeferredSetup");
+		Player.Instance.onPositionChanged += OnPlayerPositionChanged;
+
 
 	}
-	private void DeferredSetup()
+	private void OnPlayerPositionChanged(object sender, Player.SetPathEventArgs e)
 	{
-		pathfindingAgent.setPath(GlobalPosition, Player.Instance.GlobalPosition);
-		pathEnumerator = pathfindingAgent.GetNextPathPosition().GetEnumerator();
-		pathEnumerator.MoveNext();
+		if (isCalculatingNewPath)
+		{
+			return;
+		}
+		isCalculatingNewPath = true;
+		pathfindingAgent.parentPosition = GlobalPosition;
+		pathfindingAgent.setPath(GlobalPosition, e.EndPos);
+		pendingEnumerator = pathfindingAgent.GetNextPathPosition().GetEnumerator();
 	}
+	
 	public override void _PhysicsProcess(double delta)
 	{
+		if (pendingEnumerator != null)
+		{
+			currentEnumerator = pendingEnumerator;
+			isCalculatingNewPath = false;
+			pendingEnumerator = null;
+			currentEnumerator.MoveNext();
+		}
 		MoveTestPathfinding();
-		pathfindingAgent.parentPosition = GlobalPosition;
+		
 	}
 
 	private void Move()
@@ -49,16 +64,17 @@ public partial class Enemy : CharacterBody2D, IDamageable
 
 	private void MoveTestPathfinding()
 	{
-		if (pathEnumerator == null)
+		if (currentEnumerator == null)
 		{
 			return;
 		}
-		Vector2 targetPos = pathEnumerator.Current;
+		
+		Vector2 targetPos = currentEnumerator.Current;
 		if (GlobalPosition.DistanceTo(targetPos) < 5f)
 		{
-			if (pathEnumerator.MoveNext())
+			if (currentEnumerator.MoveNext())
 			{
-				targetPos = pathEnumerator.Current;
+				targetPos = currentEnumerator.Current;
 			}
 			
 		}
